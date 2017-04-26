@@ -13,6 +13,11 @@ json::ostream& operator ^ (json::ostream& s, const MyDataType& mdt) {
 }
 the same is true for insertions - only in this case we would be using json::istream opjects
 
+Note
+-------------------
+This library uses boost as a back end for the JSON parsing. In order to successfully work with the boost implementation you have to 
+replace your a file that is found under boost_fix with an instrations of what needs to be done
+
 The following is an example on how to create  JOSN out of C++ data type
 
 Create JSON
