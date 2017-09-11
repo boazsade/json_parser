@@ -2,6 +2,7 @@
 This project would enable the use of json format messages to be parsed directly into C/C++ data structures
 This is basedon the the boost property tree data type (so would must have a boost installation on you host in order to compile this).
 The format is 
+~~~~
 struct MyDataType {
   int a;
   double b;
@@ -11,6 +12,7 @@ struct MyDataType {
 json::ostream& operator ^ (json::ostream& s, const MyDataType& mdt) {
   return s ^ json::_name("a") ^ mdt.a ^ json::_name("b") ^ mdt.b ^ json::_name("a string") ^ mdt.s;
 }
+~~~~
 the same is true for insertions - only in this case we would be using json::istream opjects
 
 Note
@@ -22,7 +24,7 @@ The following is an example on how to create  JOSN out of C++ data type
 
 Create JSON
 ----------------------
-
+~~~~
 #include "json_parser/json_ostream.h"
 #include "json_parser/json_writer.h"
 #include "json_parser/jsonfwrd.h"
@@ -65,6 +67,7 @@ int main() {
     auto msg = root ^ json::str_cast;
     std::cout<<"message:\n"<<msg<<std::endl;
 }
+~~~~
 And the output in this case would be 
 {
 	"start": {
@@ -80,7 +83,7 @@ note that the "second" entry is missing because we did not added anything under 
 note how this automatically handle pointers of different types
 
 a more elaborated example include an internal list of compound elements (vector of structs)
-
+~~~~
 #include "libs/json_parser/json_ostream.h"
 #include "libs/json_parser/json_writer.h"
 #include "libs/json_parser/jsonfwrd.h"
@@ -144,7 +147,7 @@ int main() {
     auto msg = root ^ json::str_cast;
     std::cout<<"message:\n"<<msg<<std::endl;
 }
-
+~~~~
 and the output is:
 {
 	"start": {
@@ -172,6 +175,7 @@ note that std::vector, std::list, std::set std::array and normal C array are han
 note that the "_n" and "_s" are literals that tells it that the literal preceding the "_n" for the key name (and not a value) and "_s" is the start of new sub tree in JSON
 
 the last "write" example is with a simple array - again array is sub element so you need to create it then pass to the streaming operation - only in this case you have a direct transaction without the need to write manual operator
+~~~~
 #include "libs/json_parser/json_ostream.h"
 #include "libs/json_parser/json_writer.h"
 #include "libs/json_parser/jsonfwrd.h"
@@ -240,6 +244,7 @@ int main() {
     auto msg = root ^ json::str_cast;
     std::cout<<"message:\n"<<msg<<std::endl;
 }
+~~~~
 and the output is 
 {
 	"start": {
@@ -263,7 +268,7 @@ and the output is
 
 READING JSON
 This code has a function that handle the reading of JSON from stream (in this example its assuming a file, but any STL stream is a valid input). the function also handle examption - since in this case if we have missing entry in JSON or invalid type of enty or invalid JSON an exception is thrown
-
+~~~~
 #include "libs/json_parser/json_istream.h"
 #include <boost/filesystem.hpp>
 #include <string>
@@ -306,7 +311,7 @@ bool json_message::get_header(const std::string& input, message_header& output)
         return report_error("failed to parse message header");
     }    
 }
-
+~~~~
 the json that is an input to the function is
 
 {
