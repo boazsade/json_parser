@@ -71,6 +71,7 @@ int main() {
 }
 ```
 And the output in this case would be 
+~~~~
 {
 	"start": {
 		"a": 0,
@@ -81,6 +82,7 @@ And the output in this case would be
 		"cp": ""
 	}
 }
+~~~~
 note that the "second" entry is missing because we did not added anything under it
 note how this automatically handle pointers of different types
 
@@ -152,6 +154,7 @@ int main() {
 }
 ```
 and the output is:
+~~~~
 {
 	"start": {
 		"a": 0,
@@ -169,7 +172,7 @@ and the output is:
 		}]
 	}
 }
-
+~~~~
 note that since the list of elements is of compund type you must create sub tree by doing:
 auto l = js ^ "struct_array"_s;
 l ^ f.list ^ json::_end;
@@ -250,6 +253,7 @@ int main() {
 }
 ```
 and the output is 
+~~~~
 {
 	"start": {
 		"a": 0,
@@ -269,7 +273,7 @@ and the output is
 	}
 }
 
-
+~~~~
 READING JSON
 This code has a function that handle the reading of JSON from stream (in this example its assuming a file, but any STL stream is a valid input). the function also handle examption - since in this case if we have missing entry in JSON or invalid type of enty or invalid JSON an exception is thrown
 
@@ -318,7 +322,7 @@ bool json_message::get_header(const std::string& input, message_header& output)
 }
 ```
 the json that is an input to the function is
-
+~~~~
 {
     "title": {
         "solution_type": "solution name",
@@ -327,5 +331,5 @@ the json that is an input to the function is
         "uuid": "9817234"
     }
 }
-
+~~~~
 note that the list of "reply_type" is optional and so we are not failing if we are not reading it!
