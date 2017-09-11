@@ -3,6 +3,7 @@ This project would enable the use of json format messages to be parsed directly 
 This is basedon the the boost property tree data type (so would must have a boost installation on you host in order to compile this).
 The format is 
 ~~~~
+```cpp
 struct MyDataType {
   int a;
   double b;
@@ -25,6 +26,7 @@ The following is an example on how to create  JOSN out of C++ data type
 Create JSON
 ----------------------
 ~~~~
+```cpp
 #include "json_parser/json_ostream.h"
 #include "json_parser/json_writer.h"
 #include "json_parser/jsonfwrd.h"
@@ -84,6 +86,7 @@ note how this automatically handle pointers of different types
 
 a more elaborated example include an internal list of compound elements (vector of structs)
 ~~~~
+```cpp
 #include "libs/json_parser/json_ostream.h"
 #include "libs/json_parser/json_writer.h"
 #include "libs/json_parser/jsonfwrd.h"
@@ -176,6 +179,7 @@ note that the "_n" and "_s" are literals that tells it that the literal precedin
 
 the last "write" example is with a simple array - again array is sub element so you need to create it then pass to the streaming operation - only in this case you have a direct transaction without the need to write manual operator
 ~~~~
+```cpp
 #include "libs/json_parser/json_ostream.h"
 #include "libs/json_parser/json_writer.h"
 #include "libs/json_parser/jsonfwrd.h"
@@ -269,6 +273,7 @@ and the output is
 READING JSON
 This code has a function that handle the reading of JSON from stream (in this example its assuming a file, but any STL stream is a valid input). the function also handle examption - since in this case if we have missing entry in JSON or invalid type of enty or invalid JSON an exception is thrown
 ~~~~
+```cpp
 #include "libs/json_parser/json_istream.h"
 #include <boost/filesystem.hpp>
 #include <string>
