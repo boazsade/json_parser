@@ -26,44 +26,89 @@ struct _new
     {
     }
 
+    _new(const char* n, std::size_t) : name(n)
+    {
+    }
+
     void create();
 
 private:
     const char* name;
 };
 
-static const struct __end
+constexpr const struct __end
 {
 
-} _end = __end();
+} _end = __end{};
 
 struct _start
 {
     _start(const char* n) : value(n)
     {
+    }
 
+    _start(const char* n, std::size_t) : value(n)
+    {
     }
 
     const char* value;
 };
 
-static const struct _pushe 
+constexpr const struct _pushe 
 {
-} _pushend = _pushe();
+} _pushend = _pushe{};
 
-static const _pushe _empty = _pushe();
+constexpr const _pushe _empty = _pushe{};
 
 struct _push 
 {
     _push(const char* n = "") : name(n)
     {
+    }
 
+    _push(const char* n, std::size_t) : name(n)
+    {
     }
 
     const char* name;
 };
 
 static const _push _array = _push();
+
+inline namespace literals
+{
+
+inline _start operator "" _s(const char* str)
+{
+    return _start{str};
+}
+
+inline _start operator "" _s(const char* str, std::size_t s)
+{
+    return _start{str, s};
+}
+
+inline _new operator "" _nw(const char* str)
+{
+    return _new{str};
+}
+
+inline _new operator "" _nw(const char* str, std::size_t s)
+{
+    return _new{str, s};
+}
+
+inline _push operator "" _p(const char* str)
+{
+    return _push(str);
+}
+
+inline _push operator "" _p(const char* str, std::size_t s)
+{
+    return _push(str, s);
+}
+
+}   // end of namespace literals
 
 template<typename T>
 struct c_array
@@ -89,16 +134,27 @@ struct c_array
 	}
 
 	bool empty() const {
-		return from == empty;
+		return from == to;
 	}
 
 	const_pointer_type from;
 	const_pointer_type to;
 };
 
+template<typename T>
+inline bool empty(const c_array<T>& a)
+{
+    return a.begin() == a.end();
+}
+
+template<typename T>
+inline std::size_t size(const c_array<T>& a)
+{
+    return a.end() - a.begin();
+}
 
 template<typename T, std::size_t A> inline
-c_array<T>	make_carray(const T (&a)[A]) {
+c_array<T>  make_carray(const T (&a)[A]) {
 	return c_array<T>(a, A);
 }
 
@@ -296,13 +352,13 @@ struct basic_ostream : json_stream
 
     this_type& operator ^ (const __end&)
     {
-        if (this->good() && parent) {
-            const char* name = "";
+        if (this->good() && parent && !pt.empty()) {
+            const char* n = "";
             if (parent->element_name()) {
-                name = parent->element_name();
+                n = parent->element_name();
             }
 
-            parent->entries().add_child(name, pt);
+            parent->entries().add_child(n, pt);
             childs.reset((proptree_type*)0);
             return *parent;
         }
@@ -366,6 +422,10 @@ private:
     this_type* parent;
 };
 
+////////////////////////////////////////////////////////
+template<typename Ch>
+struct basic_output_stream;
+
 namespace detail {
 template<typename P, typename T>
 struct handle_pointer {
@@ -393,11 +453,66 @@ struct handle_pointer<typename T::char_type, T> {
 	}
 };
 
+template<typename T>
+struct impl2string;
+
+template<>
+struct impl2string<char> {
+    static std::string write(basic_output_stream<char>& input);
+};
+
+template<>
+struct impl2string<wchar_t> {
+    static std::wstring write(basic_output_stream<wchar_t>& input);
+};
+
+template<typename Ch> inline
+std::basic_string<Ch> to_string(basic_output_stream<Ch>& os)
+{
+    return impl2string<Ch>::write(os);
+}
+
 }	// end of namespace detail
 
+///////////////////////////////////////////////////////////////
 
-typedef basic_ostream<char> ostream;
-typedef basic_ostream<wchar_t> wostream;
+//typedef basic_ostream<char> ostream;
+//typedef basic_ostream<wchar_t> wostream;
+
+///////////////////////////////////////////////////////////////
+
+template<typename Ch>
+struct basic_output_stream
+{
+    using result_type = basic_ostream<Ch>;
+    using ptree_root = typename result_type::proptree_type;
+
+    basic_output_stream() = default;
+    basic_output_stream(basic_output_stream&&) = default;
+    basic_output_stream& operator = (basic_output_stream&&) = default;
+    basic_output_stream(const basic_output_stream&) = default;
+    basic_output_stream& operator = (basic_output_stream&) = default;
+
+    ptree_root tree_root;
+};
+
+const struct _start_out_stream {} open = _start_out_stream{};
+const struct _end_out_stream{} str_cast = _end_out_stream{};
+
+template<typename Ch> inline
+typename basic_output_stream<Ch>::result_type operator ^ 
+    (basic_output_stream<Ch>& os, _start_out_stream) {
+        return typename basic_output_stream<Ch>::result_type(os.tree_root);
+}
+
+template<typename Ch> inline
+std::basic_string<Ch> operator ^ 
+    (basic_output_stream<Ch>& os, _end_out_stream) {
+        return detail::to_string(os);
+}
+
+//using output_stream = basic_output_stream<char>;
+//using woutput_stream = basic_output_stream<wchar_t>;
 
 }   // end of namespace json
 

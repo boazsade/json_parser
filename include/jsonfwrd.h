@@ -1,8 +1,8 @@
 #pragma once
-#include "common/json/json_writer.h"
-#include "common/json/json_reader.h"
-#include "common/json/json_ostream.h"
-#include "common/json/json_istream.h"
+#include "json_parser/json_writer.h"
+#include "json_parser/json_reader.h"
+#include "json_parser/json_ostream.h"
+#include "json_parser/json_istream.h"
 
 #include <iosfwd>
 #include <string>
@@ -30,12 +30,6 @@ bool write(std::ostream& to, generate_array& ga, bool indent = false);
 bool wwrite(std::wostream& to, wentry_writer& ga, bool indent = false);
 bool wwrite(std::wostream& to, warray_writer& ga, bool indent = false);
 bool wwrite(std::wostream& to, wgenerate_array& ga, bool indent = false);
-
-// read json into property tree
-bool read(std::istream& from, boost::property_tree::ptree& pt);
-bool read(std::wistream& from, boost::property_tree::wptree& pt);
-bool read(const std::string& input, boost::property_tree::ptree& pt);
-bool read(const std::wstring& input, boost::property_tree::wptree& pt);
 
 std::string as_string(const json::istream& from);  // return the entries under the given istream objs as plain string
 

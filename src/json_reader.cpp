@@ -1,5 +1,5 @@
-#include "common/json/json_reader.h"
-#include "common/json/jsonfwrd.h"
+#include "json_parser/json_reader.h"
+#include "json_parser/jsonfwrd.h"
 
 namespace json
 {

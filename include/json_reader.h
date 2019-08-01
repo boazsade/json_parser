@@ -156,7 +156,7 @@ struct ref_single_entry : reader<T>
 		try {
 			value = this->operator()(name.c_str(), pt);
 			return true;
-		} catch (std::exception& e) {
+		} catch (std::exception& ) {
 			return false;
 		}
 	}
@@ -326,7 +326,7 @@ public:
     }
 
 private:
-    bool read(const std::string& from, proptree_type& pt)
+    bool read(const std::string& , proptree_type& pt)
     {
         std::basic_istringstream<char_type> buffer;
         try {
@@ -340,5 +340,11 @@ private:
 private:
     data_type   data;
 };
+
+// read json into property tree
+bool read(std::istream& from, boost::property_tree::ptree& pt);
+bool read(std::wistream& from, boost::property_tree::wptree& pt);
+bool read(const std::string& input, boost::property_tree::ptree& pt);
+bool read(const std::wstring& input, boost::property_tree::wptree& pt);
 
 }   // end of namespace json

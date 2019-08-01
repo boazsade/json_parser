@@ -1,6 +1,6 @@
-#include "common/json/json_writer.h"
-#include "common/json/jsonfwrd.h"
-#include "common/json/json_istream.h"
+#include "json_parser/json_writer.h"
+#include "json_parser/jsonfwrd.h"
+#include "json_parser/json_istream.h"
 
 namespace json
 {
@@ -390,6 +390,23 @@ std::string as_string(const istream& input)
         return error;
     }
 }
+
+namespace detail
+{
+
+std::string impl2string<char>::write(basic_output_stream<char>& input) {
+    std::ostringstream s;
+    write_to(s, input.tree_root, false);
+    return s.str();
+}
+
+std::wstring impl2string<wchar_t>::write(basic_output_stream<wchar_t>& input) {
+    std::wostringstream s;
+    write_to(s, input.tree_root, false);
+    return s.str();
+}
+
+}   // end of namespace detail
 
 }   // end of namespace json
 

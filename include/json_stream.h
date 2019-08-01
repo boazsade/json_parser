@@ -1,4 +1,5 @@
 #pragma once
+#include "json_fwd.h"
 #include <boost/mpl/if.hpp> // boost::mpl::if_c
 #include <boost/type_traits/is_same.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -42,12 +43,37 @@ struct _name
     {
     }
 
+    _name(const char* n, std::size_t): value(n)
+    {
+    }
+
     const char* value;
 };
+
+inline namespace literals
+{
+
+inline _name operator "" _n(const char* s)
+{
+    return _name(s);
+}
+
+inline _name operator "" _n(const char* s, std::size_t sz)
+{
+    return _name(s, sz);
+}
+
+}   // end of namespace literals
 
 struct json_stream
 {    
     json_stream() : ok(true), op_val(false), name(0)
+    {
+    }
+
+    explicit json_stream(bool stat, 
+            bool op = false, const char* n = nullptr) :
+                    ok{stat}, op_val{op}, name{n}
     {
     }
 
@@ -82,7 +108,7 @@ struct json_stream
 
     void reset()
     {
-        name = 0;
+        name = nullptr;
         op_val = false;
     }
 
@@ -102,9 +128,9 @@ struct json_stream
     }
 
 private:
-    bool ok;
-    bool op_val;
-    const char* name;
+    bool ok = true;
+    bool op_val = false;
+    const char* name = nullptr;
 };
 
 // use to to signal that this variable that we are 
