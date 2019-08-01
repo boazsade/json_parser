@@ -1,8 +1,8 @@
 #pragma once
-#include "json_parser/json_writer.h"
-#include "json_parser/json_reader.h"
-#include "json_parser/json_ostream.h"
-#include "json_parser/json_istream.h"
+#include "json_writer.h"
+#include "json_reader.h"
+#include "json_ostream.h"
+#include "json_istream.h"
 
 #include <iosfwd>
 #include <string>

@@ -5,6 +5,7 @@
 #include <boost/fusion/adapted/struct.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/phoenix/phoenix.hpp>
+#include <type_traits>
 
 namespace json
 {
@@ -57,6 +58,87 @@ namespace util
 //      return json::util::from_json(js, b, &NAMES[0]);
 //  }
 //
+
+namespace private_
+{
+
+template<typename Test, template<typename...> class Ref>
+struct is_specialization : std::false_type {};
+
+template<template<typename...> class Ref, typename... Args>
+struct is_specialization<Ref<Args...>, Ref>: std::true_type {};
+
+template<typename T> inline 
+ostream& insert_list(ostream& to, const T& what, const char* label)
+{
+    auto i = to ^ _start(label);
+    i ^ what ^ _end;
+    return to;
+}
+
+template<typename T> inline 
+ostream& insert_simple(ostream& to, const T& what, const char* label)
+{
+    to ^ _name(label) ^ what;
+    return to;
+}
+
+template<typename T> inline 
+istream& extract_list(istream& with, T& to, const char* label)
+{
+    auto er = with ^ json::_child(with, _name(label)); 
+    er ^ json::start_arr ^ to ^ json::end_arr; 
+    return with;
+}
+
+template<typename T> inline 
+istream& extract_simple(istream& with, T& to, const char* label)
+{
+    with ^ _name(label) ^ to;
+    return with;
+}
+
+template<typename T> inline
+ostream& insert_to(ostream& to, const T& what, const char* label)
+{
+    using actual_type = T;
+    if constexpr (is_specialization<actual_type, std::vector>::value) { 
+        return insert_list(to, what, label);
+    } else {
+        if constexpr (is_specialization<actual_type, std::list>::value) {
+            return insert_list(to, what, label);
+        } else {
+            if constexpr (is_specialization<actual_type, std::set>::value) {
+                return insert_list(to, what, label);
+            }
+        }
+    }
+            
+    return insert_simple(to, what, label);
+}
+
+template<typename T> inline
+istream& extract_from(istream& with, T& to, const char* label)
+{
+    using actual_type = T;
+    if constexpr (is_specialization<actual_type, std::vector>::value) { 
+        return extract_list(with, to, label);
+    } else {
+        if constexpr (is_specialization<actual_type, std::list>::value) {
+            return extract_list(with, to, label);
+        } else {
+            if constexpr (is_specialization<actual_type, std::set>::value) {
+                return extract_list(with, to, label);
+            }
+        }
+    }
+            
+    return extract_simple(with, to, label);
+}
+
+
+}   // end of namespace private_
+
 template<typename T>
 inline ostream& build_entry(ostream& js, const T& from, const char** labels)
 {
@@ -85,6 +167,36 @@ inline istream& read_entry(istream& js, T& to, const char** labels)
         }
     );
     return js;
+}
+
+template<typename T>
+inline ostream& serialized(ostream& os, const T& from, const char** labels)
+{
+    using boost::phoenix::arg_names::arg1;
+    using namespace json::literals;
+
+    boost::fusion::for_each(from, [&os, &labels](auto&& arg1) {
+                private_::insert_to(os, arg1, *labels);
+                ++labels;
+                return os;
+            }
+    );
+    return os;
+}
+
+template<typename T>
+inline istream& deserialized(istream& os, T& from, const char** labels)
+{
+    using boost::phoenix::arg_names::arg1;
+    using namespace json::literals;
+
+    boost::fusion::for_each(from, [&os, &labels](auto&& arg1) {
+                private_::extract_from(os, arg1, *labels);
+                ++labels;
+                return os;
+            }
+    );
+    return os;
 }
 
 }   // end of namespace util

@@ -1,6 +1,6 @@
-#include "json_parser/json_writer.h"
-#include "json_parser/jsonfwrd.h"
-#include "json_parser/json_istream.h"
+#include "json_writer.h"
+#include "jsonfwrd.h"
+#include "json_istream.h"
 
 namespace json
 {
