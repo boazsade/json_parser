@@ -332,4 +332,102 @@ the json that is an input to the function is
     }
 }
 ~~~~
+```cpp
+// Yet another option to read from json with less explicit code
+#include <iostream>
+#include "json_parser/include/json_ostream.h"
+#include "json_parser/include/json_utils.h"
+#include <string>
+#include <vector>
+#include <map>
+
+struct foo {
+	int a{1};
+	double b{1.1};
+	std::string s{"hello"};
+};
+
+BOOST_FUSION_ADAPT_STRUCT(foo, (int, a)(double, b)(std::string, s));
+json::istream& operator ^ (json::istream& os,  foo& f)
+{
+    static const char* LABELS[] = {
+        "a", "b", "s"
+    };
+
+    return json::util::deserialized(os, f, &LABELS[0]);
+}
+std::ostream& operator << (std::ostream& os, const foo& f) {
+	return os<<"{a: "<<f.a<<", b: "<<f.b<<", s: "<<f.s<<"}";
+}
+struct bar {
+	std::vector<foo> f;
+};
+BOOST_FUSION_ADAPT_STRUCT(bar, (std::vector<foo>, f));
+json::istream& operator ^ (json::istream& with,  bar& b)
+{
+    static const char* LABELS[] = {
+        ""
+    };
+
+    return json::util::deserialized(with, b, &LABELS[0]);
+}
+std::ostream& operator << (std::ostream& os, const bar& f) {
+        os<<" foo: [\n";
+        for (const auto& i: f.f) {
+                os<<"\t"<<i<<",\n";
+        }
+        return os<<"]";
+}
+template<typename Stream>
+auto from_json(Stream input) -> bar {
+	bar b;
+        json::istream_root root;
+        root ^ input;
+	std::cout<<"successfully parseed the input "<<std::endl;
+        auto base_node = root ^ json::_root;
+	std::cout<<"successfully read the base input"<<std::endl;
+	auto header = base_node ^ json::_child(base_node, json::_name("title"));
+	std::cout<<"successfully read the title"<<std::endl;
+	header ^ b;
+	return b; 
+}
+
+int main(int argc, char** argv) {
+	if (argc < 2) {
+		std::cerr<<"usage: <input file>\n";
+		return -1;
+	}
+	std::ifstream input{argv[1]};
+	if (input) {
+		std::cout<<"successfully read input file"<<std::endl;
+		std::ostringstream buffer;
+		buffer << input.rdbuf();
+		try {
+			const auto b{from_json(std::move(buffer.str()))};
+			std::cout<<"successfully read from json "<<b<<std::endl;
+		} catch (const std::exception& e) {
+			std::cerr<<"failed to process: "<<e.what()<<std::endl;
+		}
+	} else {
+		std::cerr<<"failed to open "<<argv[1]<<" for reading\n";
+		return -1;
+	}
+}
+```
+Use the this json input to test this code
+```json{
+	"title": [{
+		"a": 1,
+		"b": 1.1111,
+		"s": "hello"
+	},
+	{
+		"a": 1444,
+		"b": 121.23411,
+		"s": "world"
+	}]
+}
+```
+
+
 note that the list of "reply_type" is optional and so we are not failing if we are not reading it!
