@@ -331,6 +331,7 @@ the json that is an input to the function is
         "uuid": "9817234"
     }
 }
+note that the list of "reply_type" is optional and so we are not failing if we are not reading it!
 ~~~~
 ```cpp
 // Yet another option to read from json with less explicit code
@@ -429,6 +430,4 @@ Use the this json input to test this code
 	}]
 }
 ```
-
-
-note that the list of "reply_type" is optional and so we are not failing if we are not reading it!
+Please note that in the case of arrys it is using an empty tag name for it.
