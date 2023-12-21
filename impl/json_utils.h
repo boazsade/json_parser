@@ -1,5 +1,5 @@
 #pragma once
-// Functions that can be used to help altivate some boilerplate code
+
 #include "json_ostream.h"
 #include "json_istream.h"
 #include <boost/fusion/adapted/struct.hpp>
@@ -13,13 +13,13 @@ namespace json
 namespace util
 {
 
-// This two function allow us to convert a given strucure into JSON strucutre
+// This two function allow us to convert a given strucure into JSON structure
 // You to
-//  1. Adopt your structure into iterable strcure using BOOST_FUSION_ADAPT_STRUCT
+//  1. Adopt your structure into iterable strucure using BOOST_FUSION_ADAPT_STRUCT
 //  2. make sure that have all your member supporting operator ^ to serialized the json or from json
 //  3. call the bellow function by passing an array of labels for each strucure tag
 //  for example:
-//  given we have strcture such as 
+//  given we have struture such as 
 //  struct foo {
 //      int a;
 //      double d;
