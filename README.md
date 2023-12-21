@@ -1,6 +1,6 @@
 # json_parser
 This project would enable the use of json format messages to be parsed directly into C/C++ data structures
-This is basedon the the boost property tree data type (so would must have a boost installation on you host in order to compile this).
+This is based on the the boost property tree data type (so would must have a boost installation on you host in order to compile this).
 The format is 
 
 ```cpp
@@ -19,7 +19,7 @@ the same is true for insertions - only in this case we would be using json::istr
 Note
 -------------------
 This library uses boost as a back end for the JSON parsing. In order to successfully work with the boost implementation you have to 
-replace your a file that is found under boost_fix with an instrations of what needs to be done
+replace your a file that is found under boost_fix with an instructions of what needs to be done
 
 The following is an example on how to create  JOSN out of C++ data type
 
@@ -304,7 +304,7 @@ json::istream& operator ^ (json::istream& os, message_header& hdr)
 }
 
 
-bool json_message::get_header(const std::string& input, message_header& output)
+bool json_message::get_header(const std::string& input, message_header& output) {
   try {
         json::istream_root root;
         root ^ input;
@@ -384,7 +384,7 @@ auto from_json(Stream input) -> bar {
 	bar b;
         json::istream_root root;
         root ^ input;
-	std::cout<<"successfully parseed the input "<<std::endl;
+	std::cout<<"successfully parsed the input "<<std::endl;
         auto base_node = root ^ json::_root;
 	std::cout<<"successfully read the base input"<<std::endl;
 	auto header = base_node ^ json::_child(base_node, json::_name("title"));
@@ -430,4 +430,4 @@ Use the this json input to test this code
 	}]
 }
 ```
-Please note that in the case of arrys it is using an empty tag name for it.
+Please note that in the case of arrays it is using an empty tag name for it.

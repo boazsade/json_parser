@@ -1,9 +1,8 @@
-// This exaple show an easy way of creating json from C++ strucutres
-// we are using iterations on the structres members so that we do
-// not need to write a code to do it manually - in esence we are 
+// This example show an easy way of creating json from C++ structures
+// we are using iterations on the structures members so that we do
+// not need to write a code to do it manually - in essence we are 
 // using the structure as array
-#include "../include/json_ostream.h"
-#include "../include/json_utils.h"
+#include "json_parser.h"
 #include <string>
 #include <vector>
 
