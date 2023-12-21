@@ -65,24 +65,24 @@ bool get_header(const std::string& input, message_header& output)
 int main(int argc, char** argv)
 {
     if (argc != 2) {
-        std::cerr<<"usage: "<<argv[0]<<" <input json file\n";
+        std::cerr << "usage: " << argv[0] << " <input json file\n";
         return -1;
-    } else {
-        std::cout<<"reading json from "<<argv[1]<<std::endl;
-        std::ostringstream buffer;
-        std::ifstream input(argv[1]);
-        if (input) {
-            buffer << input.rdbuf();
-            message_header hdr;
-            if (get_header(buffer.str(), hdr)) {
-                std::cout<<"successfully read header "<<hdr<<" from input file"<<std::endl;
-            } else {
-                std::cerr<<"failed to successsfully read hader from input file\n";
-                return -3;
-            }
+    } 
+    std::cout << "reading json from " << argv[1] << std::endl;
+    std::ostringstream buffer;
+    std::ifstream input(argv[1]);
+    if (input) {
+        buffer << input.rdbuf();
+        message_header hdr;
+        if (get_header(buffer.str(), hdr)) {
+            std::cout << "successfully read header " << hdr << " from input file" << std::endl;
         } else {
-            std::cerr<<"failed to open "<<argv[1]<<" for reading\n";
-            return -2;
+            std::cerr << "failed to successfully read header from input file\n";
+            return -3;
         }
+    } else {
+        std::cerr << "failed to open " << argv[1] << " for reading\n";
+        return -2;
+    }
 }
 
