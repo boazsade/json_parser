@@ -140,8 +140,7 @@ istream& extract_from(istream& with, T& to, const char* label)
 }   // end of namespace private_
 
 template<typename T>
-inline ostream& build_entry(ostream& js, const T& from, const char** labels)
-{
+inline auto build_entry(ostream& js, const T& from, const char** labels) -> ostream& {
     using boost::phoenix::arg_names::arg1;
     using namespace json::literals;
 
@@ -155,8 +154,7 @@ inline ostream& build_entry(ostream& js, const T& from, const char** labels)
 }
 
 template<typename T>
-inline istream& read_entry(istream& js, T& to, const char** labels)
-{
+inline auto read_entry(istream& js, T& to, const char** labels) -> istream& {
     using boost::phoenix::arg_names::arg1;
     using namespace json::literals;
 
@@ -170,8 +168,7 @@ inline istream& read_entry(istream& js, T& to, const char** labels)
 }
 
 template<typename T>
-inline ostream& serialized(ostream& os, const T& from, const char** labels)
-{
+inline auto serialized(ostream& os, const T& from, const char** labels) -> ostream& {
     using boost::phoenix::arg_names::arg1;
     using namespace json::literals;
 
@@ -185,8 +182,7 @@ inline ostream& serialized(ostream& os, const T& from, const char** labels)
 }
 
 template<typename T>
-inline istream& deserialized(istream& os, T& from, const char** labels)
-{
+inline auto deserialized(istream& os, T& from, const char** labels) -> istream& {
     using boost::phoenix::arg_names::arg1;
     using namespace json::literals;
 
@@ -197,6 +193,37 @@ inline istream& deserialized(istream& os, T& from, const char** labels)
             }
     );
     return os;
+}
+
+// note that this requires that you would have `operator ^` implemented for T!
+template<typename T>
+inline auto into(const std::string& jstr) -> T {
+    istream_root ir;
+    ir ^ jstr;
+    auto ip{ir ^ _root};
+    T res;
+    ip ^ res;
+    return res;
+}
+
+// note that this requires that you would have `operator ^` implemented for T!
+template<typename T>
+inline auto to_string(const T& obj) -> std::string {
+    output_stream root;
+    auto parser{root ^ open};
+    auto out{parser ^ obj ^ _end};
+    return (root ^ json::str_cast);
+}
+
+// for those who like Python, this is an alias to the same loved Python API
+template<typename T>
+inline auto dumps(const T& obj) -> std::string& {
+    return to_string(obj);
+}
+
+template<typename T>
+inline auto loads(const std::string& from) -> T {
+    return into(from);
 }
 
 }   // end of namespace util
