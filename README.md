@@ -1,7 +1,19 @@
 # json_parser
 This project would enable the use of json format messages to be parsed directly into C/C++ data structures
-This is based on the the boost property tree data type (so would must have a boost installation on you host in order to compile this).
-The format is 
+This is based on (boost property tree)[https://www.boost.org/doc/libs/1_85_0/doc/html/property_tree.html], so you would need to have get boost on the host where you would use this library.
+## Design Overview
+This is not intended for JSON manipulation through C++, i.e. if you would like to load JSON into memory then access elements from the parsed JSON, this is not what it does.
+This however should make it simple to read JSON directly into C++ objects and to convert C++ objects back into JSON match like [Python](https://docs.python.org/3/library/json.html) or [Rust serde](https://docs.rs/serde_json/latest/serde_json/).
+Unlike Python or Rust, where reflection exists, C++ which luck it, require that we will write a conversion operator from and to JSON.
+To this end, you would need to implement `operator ^` for both reading (istream) and writing (ostream). This flow to same pattern as the iostream operators in C++. Please note that order to make it simpler to implement and take away the burden of manually writing these operators, this uses [Boost Fusion](https://www.boost.org/doc/libs/1_85_0/libs/fusion/doc/html/fusion/adapted/adapt_struct.html) to mimic the reflection operation that we have in other languages, but still we don't have good macro support as in Rust to bypass auto reflection into and out of JSON. So in it simpler form you would still need to inform what are the JSON labels as well as manually calling the serializing/deserializing functions.
+### Note of Performance
+The  (boost property tree)[https://www.boost.org/doc/libs/1_85_0/doc/html/property_tree.html] is very bad in term of performance as well as in memory management, please don't use this where need to need to handle large JSON inputs or outputs or/and where you handle large volume of data in term of throughput.
+
+### Note about stl
+This library tries to support build in stl data types such as `vector`, `set`, `list`, `map`. Were all but `map` will be converted to JSON array, and map into JSON dictionary. Please note that the conversion is automatic, so you don't need to implement it for your vectors, but if the vector do contain you own data types, you would need to implement `operator ^` them just like `operator <<` and ` operator >>` in C++.
+
+## Basic Usage
+Say you have this data type:
 
 ```cpp
 struct MyDataType {
@@ -9,22 +21,26 @@ struct MyDataType {
   double b;
   std::string s;
 };
-
+```
+In order to convert this into JSON you would need to implement the out operation:
+```cpp
 json::ostream& operator ^ (json::ostream& s, const MyDataType& mdt) {
   return s ^ json::_name("a") ^ mdt.a ^ json::_name("b") ^ mdt.b ^ json::_name("a string") ^ mdt.s;
 }
 ```
-the same is true for insertions - only in this case we would be using json::istream opjects
+And the same is true for insertions - only in this case we would be using json::istream objects.
 
 Note
 -------------------
 This library uses boost as a back end for the JSON parsing. In order to successfully work with the boost implementation you have to 
 replace your a file that is found under boost_fix with an instructions of what needs to be done
 
-The following is an example on how to create  JOSN out of C++ data type
+The following is an example on how to create  JSON out of C++ data type
 
-Create JSON
+## From C++ to JSON
 ----------------------
+A More elaborate example of converting form C++ into JSON:
+> Note see bellow that we can make it that much simpler!
 
 ```cpp
 #include "json_parser/json_ostream.h"
@@ -83,10 +99,10 @@ And the output in this case would be
 	}
 }
 ~~~~
-note that the "second" entry is missing because we did not added anything under it
-note how this automatically handle pointers of different types
+> note that the "second" entry is missing because we did not added anything under it
+> note how this automatically handle pointers of different types
 
-a more elaborated example include an internal list of compound elements (vector of structs)
+a more elaborated example include an internal list of compound elements (vector of struct)
 
 ```cpp
 #include "libs/json_parser/json_ostream.h"
@@ -173,12 +189,14 @@ and the output is:
 	}
 }
 ~~~~
-note that since the list of elements is of compund type you must create sub tree by doing:
+> note that since the list of elements is of compound type you must create sub tree by doing:
+```cpp
 auto l = js ^ "struct_array"_s;
 l ^ f.list ^ json::_end;
+```
 which tells it to create sub tree for the "struct_array" and then when done with it json::_end it!!
-note that std::vector, std::list, std::set std::array and normal C array are handle automatically (you dont need to iterate over them)
-note that the "_n" and "_s" are literals that tells it that the literal preceding the "_n" for the key name (and not a value) and "_s" is the start of new sub tree in JSON
+> note that std::vector, std::list, std::set std::array and normal C array are handle automatically (you don`t need to iterate over them)
+> note that the "_n" and "_s" are literals that tells it that the literal preceding the "_n" for the key name (and not a value) and "_s" is the start of new sub tree in JSON
 
 the last "write" example is with a simple array - again array is sub element so you need to create it then pass to the streaming operation - only in this case you have a direct transaction without the need to write manual operator
 
@@ -274,8 +292,9 @@ and the output is
 }
 
 ~~~~
-READING JSON
-This code has a function that handle the reading of JSON from stream (in this example its assuming a file, but any STL stream is a valid input). the function also handle examption - since in this case if we have missing entry in JSON or invalid type of enty or invalid JSON an exception is thrown
+
+## From JSON to C++
+This code has a function that handle the reading of JSON from stream (in this example its assuming a file, but any STL stream is a valid input). the function also handle exception - since in this case if we have missing entry in JSON or invalid type of entry or invalid JSON an exception is thrown
 
 ```cpp
 #include "libs/json_parser/json_istream.h"
@@ -430,4 +449,34 @@ Use the this json input to test this code
 	}]
 }
 ```
-Please note that in the case of arrays it is using an empty tag name for it.
+> Please note that in the case of arrays it is using an empty tag name for it.
+
+We can make it simpler still:
+As we all know and love Python, why not make it [Python like](https://docs.python.org/3/library/json.html)?
+Assume we have 3 types: `foo` and `bar` and they are contained inside `baz`.
+If we are to implement the `^` operators for reading and writing for all 3 of them, then our code will be:
+```cpp
+#include "json_parser/include/json_utils.h"
+
+struct foo {/*lets not dwell into this path..*/};
+struct bar {/* lets not dwell into it..*/};
+struct baz { bar b; foo f};
+static const char* LABELS[] = {
+    "foo", "baz"
+};
+
+BOOST_FUSION_ADAPT_STRUCT(baz, (foo, f)(bar, b));
+auto operator ^ (json::ostream& os, const baz& f) -> json::ostream& {
+    return json::util::build_entry(os, f, &LABELS[0]);
+}
+
+auto operator ^ (json::istream& os, baz& f) -> json::istream& {
+    return json::util::read_entry(os, f, &LABELS[0]);
+}
+// and then all we have to do, as the story goes
+// There
+const auto as_str{json::util::dumps(baz{})};
+// And back
+const auto b2{json::util::loads<baz>(as_str)};
+```
+Please take a look into the `examples` sub directory from more examples. You can build and run them as well to get feel for it.

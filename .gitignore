@@ -25,3 +25,6 @@ yarn.lock
 *.so
 *.so.*
 *.o
+debug
+release
+.vscode
