@@ -8,6 +8,7 @@
 #include <sstream>
 #include <iostream>
 #include <boost/foreach.hpp>
+#include <optional>
 
 namespace json
 {
@@ -107,6 +108,37 @@ struct reader
 	}
 };
 
+template<typename T>
+struct opt_reader
+{
+	std::optional<T> operator () (const char* name, boost::property_tree::ptree& pt) const
+	{
+		auto v{pt.get_optional<T>(name)};
+        return v ? std::optional<T>{std::move(v.value())} : std::nullopt;
+	}
+
+	std::optional<T> operator () (const wchar_t* name, boost::property_tree::wptree& pt) const
+	{
+        auto v{pt.get_optional<T>(name)};
+		return v ? std::optional<T>{std::move(v.value())} : std::nullopt;
+	}
+};
+
+template<typename T>
+struct opt_array_reader
+{
+	T operator () (const char* name, boost::property_tree::ptree::value_type& entry) const
+	{
+		return entry.second.get<T>(name);
+	}
+
+	std::optional<T> operator () (const wchar_t* name, boost::property_tree::wptree::value_type& entry) const
+	{
+		auto v{entry.second.get_optional<T>(name)};
+        return v ? std::optional<T>{std::move(v.value())} : std::nullopt;
+	}
+};
+
 template<typename T, typename CharT = char>
 struct single_entry : reader<T>
 {
@@ -163,6 +195,35 @@ struct ref_single_entry : reader<T>
 
 	string_type name;
 	value_type&  value;
+};
+
+template<typename T, typename CharT = char>
+struct opt_single_entry : opt_reader<T>
+{
+	using value_type = T;
+    using char_type = CharT;
+    using string_type = std::basic_string<char_type>;
+
+    using proptree_type = typename boost::mpl::if_c<boost::is_same<char_type, char>::value,
+                                 boost::property_tree::ptree,
+                                 boost::property_tree::wptree>::type;
+	
+	opt_single_entry(const char_type* n, std::optional<T>& default_val) : name(n), value(default_val)
+	{
+	}
+
+	bool read(proptree_type& pt)
+	{
+		try {
+			value = this->operator()(name.c_str(), pt);
+			return true;
+		} catch (std::exception& e) {
+			return false;
+		}
+	}
+
+	string_type                 name;
+	std::optional<value_type>&  value;
 };
 
 template<typename T, typename CharT> inline
@@ -227,47 +288,84 @@ struct ref_array_entry : array_reader<T>
 	value_type& value;
 };
 
+template<typename T, typename CharT = char>
+struct opt_array_entry : opt_array_reader<T>
+{
+	using value_type = T	;
+    using char_type = CharT ;
+    using string_type = std::basic_string<char_type> ;
+    using proptree_type = typename boost::mpl::if_c<boost::is_same<char_type, char>::value,
+                                 boost::property_tree::ptree,
+                                 boost::property_tree::wptree>::type ;
+	
+	opt_array_entry(const char_type* n, std::optional<T>& default_val) : name(n), value(default_val)
+	{
+	}
+
+	bool read(typename proptree_type::value_type& pt)
+	{
+		try {
+			value = this->operator()(name.c_str(), pt);
+			return true;
+		} catch (std::exception&) {
+			return false;
+		}
+	}
+
+	string_type                 name;
+	std::optional<value_type>&  value;
+};
+
 template<typename T, typename CharT> inline
 std::basic_ostream<CharT>& operator << (std::basic_ostream<CharT>& os, const array_entry<T, CharT>& entry)
 {
-	return os<<details::special_chars<CharT>::open_square()<<entry.name<<details::special_chars<CharT>::dots()<<entry.value<<details::special_chars<CharT>::closing_square();
+	return os << details::special_chars<CharT>::open_square() << entry.name
+        << details::special_chars<CharT>::dots() << entry.value << details::special_chars<CharT>::closing_square();
 }
 
-typedef array_entry<int>		    int_array_entry;
-typedef array_entry<std::string>	str_array_entry;
-typedef array_entry<double>		    fp_array_entry;
-typedef array_entry<bool>		    bool_array_entry;
-typedef single_entry<int>		    int_entry;
-typedef single_entry<std::string>	str_entry;
-typedef single_entry<double>		fp_entry;
-typedef single_entry<bool>		    bool_entry;
+using int_array_entry = array_entry<int>;
+using str_array_entry = array_entry<std::string>;
+using fp_array_entry = array_entry<double>;
+using bool_array_entry = array_entry<bool>;
+using int_entry = single_entry<int>;
+using str_entry = single_entry<std::string>;
+using fp_entry = single_entry<double>;
+using bool_entry = single_entry<bool>;
+
+using opt_int_entry = opt_single_entry<int>;
+using opt_str_entry = opt_single_entry<std::string>;
+using opt_fp_entry = opt_single_entry<double>;
+using opt_bool_entry = opt_single_entry<bool>;
+using opt_int_array_entry = opt_array_entry<int>;
+using opt_str_array_entry = opt_array_entry<std::string>;
+using opt_fp_array_entry = opt_array_entry<double>;
+using opt_bool_array_entry = opt_array_entry<bool>;
 ////////////////////
 // wide version
-typedef array_entry<int, wchar_t>		    wint_array_entry;
-typedef array_entry<std::wstring, wchar_t>	wstr_array_entry;
-typedef array_entry<double, wchar_t>		wfp_array_entry;
-typedef array_entry<bool, wchar_t>		    wbool_array_entry;
-typedef single_entry<int, wchar_t>		    wint_entry;
-typedef single_entry<std::wstring, wchar_t>	wstr_entry;
-typedef single_entry<double, wchar_t>		wfp_entry;
-typedef single_entry<bool, wchar_t>		    wbool_entry;
+using wint_array_entry = array_entry<int, wchar_t>;
+using wstr_array_entry = array_entry<std::wstring, wchar_t>;
+using wfp_array_entry = array_entry<double, wchar_t>;
+using wbool_array_entry = array_entry<bool, wchar_t>;
+using wint_entry = single_entry<int, wchar_t>;
+using wstr_entry = single_entry<std::wstring, wchar_t>;
+using wfp_entry = single_entry<double, wchar_t>;
+using wbool_entry = single_entry<bool, wchar_t>;
 
 template<typename T, typename CharT = char>
 struct values_list
 {
 private:
-    typedef std::vector<T>  data_type;
-    typedef CharT char_type;
-    typedef std::basic_string<char_type> string_type;
-    typedef typename boost::mpl::if_c<boost::is_same<char_type, char>::value,
+    using data_type = std::vector<T> ;
+    using char_type = CharT;
+    using string_type = std::basic_string<char_type>;
+    using proptree_type = typename boost::mpl::if_c<boost::is_same<char_type, char>::value,
                                  boost::property_tree::ptree,
-                                 boost::property_tree::wptree>::type proptree_type;
+                                 boost::property_tree::wptree>::type ;
 
 public:
+    using const_iterator = typename data_type::const_iterator;
 
-    typedef typename data_type::const_iterator const_iterator;
-
-    typedef T   value_type;
+    using value_type = T;
 
     explicit values_list(const string_type& input = string_type(), const char_type* root = details::null_string<char_type>::get())
     {

@@ -5,11 +5,14 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/filesystem.hpp>
+#include <optional>
+#include <filesystem>
 #include <vector>
 #include <list>
 #include <set>
 #include <fstream>
+#include <unordered_set>
+#include <iostream>
 
 namespace json
 {
@@ -41,15 +44,15 @@ class basic_istream_root;
 // this class is the class we are using in order to construct 
 // JSON message - in this case we are passing to the it
 // so data that we want to extract and it would extract it from
-// the JSON message. For examle if we are on the JSON "tree" 
+// the JSON message. For example if we are on the JSON "tree" 
 // and we have an entry with the name "foo" and the value is
 // an integer, we would extract it with istream_obj ^ "foo"_n ^ my_int;
-// note that this is not a class that you can costruct directly
+// note that this is not a class that you can construct directly
 template<typename Ch>
 struct basic_istream : json_stream
 {
-    typedef typename ptree_type<Ch>::proptree_type  proptree_type;
-    typedef typename ptree_type<Ch>::char_type      char_type;
+    using proptree_type = typename ptree_type<Ch>::proptree_type;
+    using char_type = typename ptree_type<Ch>::char_type;
 
     friend class basic_istream_root<Ch>;
 
@@ -69,12 +72,12 @@ struct basic_istream : json_stream
     // string, int, boolean and double
     // and the derived types from these:
     // all unsigned and float
-    basic_istream& operator ^ (bool & val)
+    basic_istream& operator ^ (bool& val)
     {
         return this->extract<bool>(val);
     }
 
-    basic_istream& operator ^ (int & val)
+    basic_istream& operator ^ (int& val)
     {
         return this->extract<int>(val);
     }
@@ -84,59 +87,133 @@ struct basic_istream : json_stream
         return this->extract<long>(val);
     }
 
-    basic_istream& operator ^ (unsigned long & val)
+    basic_istream& operator ^ (unsigned long& val)
     {
         return this->extract<unsigned long>(val);
     }
 
-    basic_istream& operator ^ (long long & val)
+    basic_istream& operator ^ (long long& val)
     {
         return this->extract<long long>(val);
     }
 
-    basic_istream& operator ^ (unsigned long long & val)
+    basic_istream& operator ^ (unsigned long long& val)
     {
         return this->extract<unsigned long long>(val);
     }
 
-    basic_istream& operator ^ (double & val)
+    basic_istream& operator ^ (double& val)
     {
         return this->extract<double>(val);
     }
 
-    basic_istream& operator ^ (std::string & val)
+    basic_istream& operator ^ (std::string& val)
     {
         return this->extract<std::string>(val);
     }
 
     // add support for some build in types that 
-    // we can support as well (note that this requirs cast)
-    basic_istream& operator ^ (short & val)
+    // we can support as well (note that this require cast)
+    basic_istream& operator ^ (short& val)
     {
         return this->extract<short>(val);
     }
 
-    basic_istream& operator ^ (unsigned short & val)
+    basic_istream& operator ^ (unsigned short& val)
     {
         return this->extract<unsigned short>(val);
     }
 
-    basic_istream& operator ^ (unsigned int & val)
+    basic_istream& operator ^ (unsigned int& val)
     {
         return this->extract<unsigned int>(val);
     }
 
-    basic_istream& operator ^ (unsigned char & val)
+    basic_istream& operator ^ (unsigned char& val)
     {
         return this->extract<unsigned char>(val);
     }
 
-    basic_istream& operator ^ (char & val)
+    basic_istream& operator ^ (char& val)
     {
         return this->extract<char>(val);
     }
 
-    basic_istream& operator ^ (float & val)
+    basic_istream& operator ^ (float& val)
+    {
+        return this->extract<float>(val);
+    }
+
+    ///////////////////////////////////////////////////////////////////
+    //  optional cases
+    basic_istream& operator ^ (std::optional<bool>& val)
+    {
+        return this->extract<bool>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<int>& val)
+    {
+        return this->extract<int>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<long> & val)
+    {
+        return this->extract<long>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<unsigned long>& val)
+    {
+        return this->extract<unsigned long>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<long long>& val)
+    {
+        return this->extract<long long>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<unsigned long long>& val)
+    {
+        return this->extract<unsigned long long>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<double>& val)
+    {
+        return this->extract<double>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<std::string>& val)
+    {
+        return this->extract<std::string>(val);
+    }
+
+    // add support for some build in types that 
+    // we can support as well (note that this require cast)
+    basic_istream& operator ^ (std::optional<short>& val)
+    {
+        return this->extract<short>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<unsigned short>& val)
+    {
+        return this->extract<unsigned short>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<unsigned int>& val)
+    {
+        return this->extract<unsigned int>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<unsigned char>& val)
+    {
+        return this->extract<unsigned char>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<char>& val)
+    {
+        return this->extract<char>(val);
+    }
+
+    basic_istream& operator ^ (std::optional<float>& val)
     {
         return this->extract<float>(val);
     }
@@ -176,7 +253,7 @@ struct basic_istream : json_stream
     }
 
     //basic_istream operator ^ (const __child<Ch>& c)
-    // this function is called to desend into the tree
+    // this function is called to descend into the tree
     // i.e. to instruct that we are going into the tree
     // so that the name would not be used to extract 
     // element but a sub tree
@@ -210,7 +287,13 @@ private:
     template<typename T>
     basic_istream& extract(T& val)
     {
-        return /*this->array_entries ?*/ this->extract_(val) /*: this->extract_elem(val, pt.front())*/;
+        return this->extract_(val);
+    }
+
+    template<typename T>
+    basic_istream& extract(std::optional<T>& val)
+    {
+        return this->extract_(val);
     }
     
     template<typename T>
@@ -219,6 +302,22 @@ private:
         BOOST_STATIC_ASSERT(details::check_legal_value<T>::value);
         if (this->good() && this->element_name()) {
             ref_single_entry<T> i(this->element_name(), val);
+            bool st = i.read(pt);
+            if (!this->is_op()) {   // only if this should be mandatory value, if not then ignore fail to read
+                this->set_state(st);
+            }
+        } 
+        this->reset(); 
+        return *this;
+    }
+
+    template<typename T>
+    basic_istream& extract_(std::optional<T>& val)
+    {
+        this->set_op(true);
+        BOOST_STATIC_ASSERT(details::check_legal_value<T>::value);
+        if (this->good() && this->element_name()) {
+            opt_single_entry<T> i(this->element_name(), val);
             bool st = i.read(pt);
             if (!this->is_op()) {   // only if this should be mandatory value, if not then ignore fail to read
                 this->set_state(st);
@@ -251,7 +350,7 @@ private:
 struct __root {};
 constexpr __root _root = __root{};
 
-// this class would be used to initaite the istream for json
+// this class would be used to initiate the istream for json
 // you cannot directly created json's istream, but this class
 // can. Once you start the istream with this class you can
 // start parsing and extract data from the JSON stream
@@ -282,8 +381,8 @@ public:
         }
     }
 
-    // to open a path and read from a file - you must used boost's filesytem (soon to be part of standard)
-    basic_istream_root(const boost::filesystem::path& file_path) : state{false}
+    // to open a path and read from a file - you must used boost's filesystem (soon to be part of standard)
+    basic_istream_root(const std::filesystem::path& file_path) : state{false}
     {
         if (!open(file_path)) {
             throw std::runtime_error{"failed to read JSON input from " + file_path.string()};
@@ -303,7 +402,7 @@ public:
         return state;
     }
 
-    bool open(const boost::filesystem::path& file_path)
+    bool open(const std::filesystem::path& file_path)
     {
         std::basic_ifstream<Ch> read_open(file_path.string());
         if (read_open) {
@@ -362,7 +461,7 @@ typename basic_istream_root<Ch>::stream_type operator ^ (basic_istream_root<Ch>&
 }
 
 template<typename Ch> inline 
-typename basic_istream_root<Ch>::stream_type operator ^ (basic_istream_root<Ch>& r, const boost::filesystem::path& file_path)
+typename basic_istream_root<Ch>::stream_type operator ^ (basic_istream_root<Ch>& r, const std::filesystem::path& file_path)
 {
     if (!r.open(file_path)) {
         throw std::runtime_error{"failed to read from " + file_path.string()};
@@ -386,10 +485,8 @@ inline basic_istream<T> __child<T>::get()// const
 
 }
 
-//typedef basic_istream<char>  istream;
-//typedef basic_istream<wchar_t> wistream;
-typedef __child<wchar_t> _wchild;
-typedef __child<char> _child;
+using _wchild =  __child<wchar_t>;
+using _child = __child<char>;
 
 namespace detail
 {
@@ -397,19 +494,19 @@ namespace detail
 template<typename T, typename Ch>
 struct collection_extractor
 {
-    typedef typename basic_istream<Ch>::proptree_type   ptree_type;
-    typedef typename ptree_type::iterator               iterator;
+    using ptree_type = typename basic_istream<Ch>::proptree_type;
+    using iterator =  typename ptree_type::iterator;
 
     static basic_istream<Ch>& process(basic_istream<Ch>& jis, T& container)
     {
-        typedef typename T::value_type value_type;
+        using value_type = typename T::value_type;
         try {
-            for (iterator i = jis.entries().begin(); i != jis.entries().end(); i++) {
+            for (auto i = jis.entries().begin(); i != jis.entries().end(); i++) {
                 basic_istream<Ch> tmp(i->second);
                 value_type new_value = value_type();
                 tmp ^ _name("") ^ new_value;
                 if (tmp) {
-                    container.insert(container.end(),new_value);
+                    container.insert(container.end(), new_value);
                 } else {
                     return jis; // failed
                 }
@@ -418,6 +515,21 @@ struct collection_extractor
             return jis;
         }
         return jis;
+    }
+
+    static basic_istream<Ch>& process(basic_istream<Ch>& jis, std::optional<T>& container)
+    {
+        using value_type = typename T::value_type;
+        if (jis.entries().empty()) {
+            std::cout << "The entry for the optional container is not empty" << std::endl;
+            return jis;     // nothing really to do..
+        }
+        if (!container.has_value())  {
+            std::cout << "initiating the value for our container before reading" << std::endl;
+            container = T{};
+        }
+        
+        return process(jis, container.value());
     }
 };
 
@@ -441,6 +553,62 @@ inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::set<T, A>& co
 {
     return  detail::collection_extractor<std::set<T, A>, Ch>::process(jis, container);
 }
+
+template<class Key,
+    class Hash = std::hash<Key>,
+    class KeyEqual = std::equal_to<Key>,
+    class Allocator = std::allocator<Key>, class Ch>
+inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::unordered_set<Key, Hash, KeyEqual, Allocator>& container) {
+
+    return  detail::collection_extractor<std::unordered_set<Key, Hash, KeyEqual, Allocator>, Ch>::process(jis, container);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// optional case
+
+template<typename T, typename A, typename Ch>
+inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::optional<std::vector<T, A>>& container)
+{
+    std::cout << "trying to process optional vector.." << std::endl;
+    return  detail::collection_extractor<std::vector<T, A>, Ch>::process(jis, container);
+}
+
+template<typename T, typename A, typename Ch>
+inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::optional<std::list<T, A>>& container)
+{
+    return  detail::collection_extractor<std::list<T, A>, Ch>::process(jis, container);
+}
+
+template<typename T, typename A, typename Ch>
+inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::optional<std::set<T, A>>& container)
+{
+    return  detail::collection_extractor<std::set<T, A>, Ch>::process(jis, container);
+}
+
+template<class Key,
+    class Hash = std::hash<Key>,
+    class KeyEqual = std::equal_to<Key>,
+    class Allocator = std::allocator<Key>, class Ch>
+inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::optional<std::unordered_set<Key, Hash, KeyEqual, Allocator>>& container) {
+
+    return  detail::collection_extractor<std::unordered_set<Key, Hash, KeyEqual, Allocator>, Ch>::process(jis, container);
+}
+
+/*template<typename T, typename Ch>
+inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::optional<T>& va) {
+    std::cout << "reading optional value from json" <<std::endl;
+    try {
+        T v{};
+        jis ^ v;
+        if (jis.good()) {
+            std::cout << "Setting the new value that we read successfully from json.." << std::endl;
+            va = v;
+        }
+    } catch (const std::exception&) {
+    }
+    va = std::nullopt;  // if we failed here, just set this to none
+    return jis;
+}*/
 
 
 }   // end of namespace json

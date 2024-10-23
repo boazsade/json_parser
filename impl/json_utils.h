@@ -5,7 +5,9 @@
 #include <boost/fusion/adapted/struct.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/phoenix/phoenix.hpp>
+#include <optional>
 #include <type_traits>
+#include <iostream>
 
 namespace json
 {
@@ -68,11 +70,36 @@ struct is_specialization : std::false_type {};
 template<template<typename...> class Ref, typename... Args>
 struct is_specialization<Ref<Args...>, Ref>: std::true_type {};
 
+template<typename T>
+struct is_opt_specialization : std::false_type {
+
+};
+
+template<typename T>
+struct is_opt_specialization<std::optional<T>> {
+    static constexpr bool value = is_specialization<T, std::vector>::value ||
+        is_specialization<T, std::list>::value || 
+        is_specialization<T, std::set>::value || 
+        is_specialization<T, std::unordered_set>::value;
+};
+
 template<typename T> inline 
 ostream& insert_list(ostream& to, const T& what, const char* label)
 {
     auto i = to ^ _start(label);
     i ^ what ^ _end;
+    return to;
+}
+
+template<typename T> inline 
+ostream& insert_opt_list(ostream& to, const std::optional<T>& what, const char* label) {
+    static const T empty_list = {};
+    auto i = to ^ _start(label);
+    if (what) {
+        i ^ what ^ _end;
+    } else {
+        i ^ empty_list ^ _end;
+    }
     return to;
 }
 
@@ -91,6 +118,20 @@ istream& extract_list(istream& with, T& to, const char* label)
     return with;
 }
 
+template<typename T> inline
+istream& extract_op_list(istream& with, std::optional<T>& to, const char* label) {
+    with.set_op(true);
+    auto er = with ^ json::_child(with, _name(label));
+    T target;
+    er ^ json::start_arr ^ target ^ json::end_arr;
+    if (!target.empty()) {
+        to = std::move(target);
+    } else {
+        to = std::nullopt;    // mark that we don't have it here
+    }
+    return with;
+}
+
 template<typename T> inline 
 istream& extract_simple(istream& with, T& to, const char* label)
 {
@@ -98,41 +139,58 @@ istream& extract_simple(istream& with, T& to, const char* label)
     return with;
 }
 
+// Generic operation to read the data in a given level of the JSON document,
+// we are doing pattern matching on whether this is list or no list,
+// so we can create the JSON entry correctly
 template<typename T> inline
 ostream& insert_to(ostream& to, const T& what, const char* label)
 {
     using actual_type = T;
     if constexpr (is_specialization<actual_type, std::vector>::value) { 
         return insert_list(to, what, label);
+    } else if constexpr (is_specialization<actual_type, std::list>::value) {
+        return insert_list(to, what, label);
+    } else if constexpr (is_specialization<actual_type, std::set>::value) {
+        return insert_list(to, what, label);
+    } else if constexpr (is_specialization<actual_type, std::unordered_set>::value) {
+        return insert_list(to, what, label);
     } else {
-        if constexpr (is_specialization<actual_type, std::list>::value) {
-            return insert_list(to, what, label);
-        } else {
-            if constexpr (is_specialization<actual_type, std::set>::value) {
-                return insert_list(to, what, label);
-            }
+        if constexpr (is_opt_specialization<actual_type>::value) {
+        // this last case is for an optional value that holds a list.
+        // We have an issue here, since we need to either save the contained value
+        // or just create empty list!
+            return insert_opt_list(to, what, label);
         }
     }
-            
     return insert_simple(to, what, label);
 }
 
+// A generic data extraction from a JSON document.
+// we are pattern matching on the type that need to be extract
+// from the JSON document. WE care whether this is a list or not
+// since this will detected on how to extract the data from JSON
+// and into the type that we are filling.
 template<typename T> inline
 istream& extract_from(istream& with, T& to, const char* label)
 {
     using actual_type = T;
     if constexpr (is_specialization<actual_type, std::vector>::value) { 
         return extract_list(with, to, label);
+    } else if constexpr (is_specialization<actual_type, std::list>::value) {
+        return extract_list(with, to, label);
+    } else if constexpr (is_specialization<actual_type, std::set>::value) {
+        return extract_list(with, to, label);
+    } else if constexpr (is_specialization<actual_type, std::unordered_set>::value) {
+        return extract_list(with, to, label);
     } else {
-        if constexpr (is_specialization<actual_type, std::list>::value) {
-            return extract_list(with, to, label);
-        } else {
-            if constexpr (is_specialization<actual_type, std::set>::value) {
-                return extract_list(with, to, label);
-            }
+        if constexpr (is_opt_specialization<actual_type>::value) {
+        // this is a little more subtle, we have a targe type that is an optional, but it holds
+        // a container inside it that need to be fill.
+        // we need to try and fill this container, but since this is optional, it may not exists
+        // in the document as well..
+            return extract_op_list(with, to, label);
         }
     }
-            
     return extract_simple(with, to, label);
 }
 
@@ -144,7 +202,7 @@ inline auto build_entry(ostream& js, const T& from, const char** labels) -> ostr
     using boost::phoenix::arg_names::arg1;
     using namespace json::literals;
 
-    boost::fusion::for_each(from, [&js, &labels](auto&& arg1) {
+    boost::fusion::for_each(from, [&js, &labels](auto&& arg1) {       
             auto rr = js ^ _start(*labels);
             rr ^ arg1 ^ _end;
             ++labels;
@@ -173,10 +231,10 @@ inline auto serialized(ostream& os, const T& from, const char** labels) -> ostre
     using namespace json::literals;
 
     boost::fusion::for_each(from, [&os, &labels](auto&& arg1) {
-                private_::insert_to(os, arg1, *labels);
-                ++labels;
-                return os;
-            }
+            private_::insert_to(os, arg1, *labels);
+            ++labels;
+            return os;
+        }
     );
     return os;
 }
@@ -187,10 +245,10 @@ inline auto deserialized(istream& os, T& from, const char** labels) -> istream& 
     using namespace json::literals;
 
     boost::fusion::for_each(from, [&os, &labels](auto&& arg1) {
-                private_::extract_from(os, arg1, *labels);
-                ++labels;
-                return os;
-            }
+            private_::extract_from(os, arg1, *labels);
+            ++labels;
+            return os;
+        }
     );
     return os;
 }
@@ -217,13 +275,13 @@ inline auto to_string(const T& obj) -> std::string {
 
 // for those who like Python, this is an alias to the same loved Python API
 template<typename T>
-inline auto dumps(const T& obj) -> std::string& {
+inline auto dumps(const T& obj) -> std::string {
     return to_string(obj);
 }
 
 template<typename T>
 inline auto loads(const std::string& from) -> T {
-    return into(from);
+    return into<T>(from);
 }
 
 }   // end of namespace util

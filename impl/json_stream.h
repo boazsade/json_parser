@@ -1,11 +1,10 @@
 #pragma once
 #include "json_fwd.h"
-#include <boost/mpl/if.hpp> // boost::mpl::if_c
-#include <boost/type_traits/is_same.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/type_traits/is_pointer.hpp>
 #include <boost/type_traits/is_member_function_pointer.hpp> 
 #include <boost/type_traits/is_function.hpp>
+#include <type_traits>
 
 namespace json
 {
@@ -20,13 +19,27 @@ namespace details {
     };
 }   // end of namespace details
 
+template<typename T>
+struct ptree_type_t;
+
+template<>
+struct ptree_type_t<char> {
+    using proptree_type =  boost::property_tree::ptree;
+};
+
+template<>
+struct ptree_type_t<wchar_t> {
+    using proptree_type =  boost::property_tree::wptree;
+};
+
 template<typename Ch>
 struct ptree_type
 {
-    typedef Ch char_type;
-    typedef typename boost::mpl::if_c<boost::is_same<char_type, char>::value,
+    using char_type = Ch;
+    /*typedef typename boost::mpl::if_c<boost::is_same<char_type, char>::value,
                                  boost::property_tree::ptree,
-                                 boost::property_tree::wptree>::type proptree_type;
+                                  proptree_type;*/
+   using proptree_type = typename ptree_type_t<char_type>::proptree_type;
 
 };
 
@@ -36,7 +49,7 @@ struct ptree_type
 //{
 //} _array = __array();
 //
-// to allow overloading for exterction of data based on name
+// to allow overloading for extraction of data based on name
 struct _name
 {
     _name(const char* n) : value(n)
