@@ -12,6 +12,52 @@ The  (boost property tree)[https://www.boost.org/doc/libs/1_85_0/doc/html/proper
 ### Note about stl
 This library tries to support build in stl data types such as `vector`, `set`, `list`, `map`. Were all but `map` will be converted to JSON array, and map into JSON dictionary. Please note that the conversion is automatic, so you don't need to implement it for your vectors, but if the vector do contain you own data types, you would need to implement `operator ^` them just like `operator <<` and ` operator >>` in C++.
 
+## Build
+This library is using [conan](https://docs.conan.io/2/index.html) and [cmake](https://cmake.org/) for its builds.
+You can build this without `conan` using just cmake, but in this case, make sure to install (boost)[https://www.boost.org/] on you build machine.
+> Note that you depends on the existing matching releases on conan repository, so the first time installation can be long if there are no exact matching to the packages of boost on conan repository.
+### Linux build
+When building with `conan` on `Linux`, you have a script that automate the installation dependencies:
+```bash
+./instal_conan.sh -i -a
+```
+For first time installed, and whenever you are removing the `build` directory, you can run
+```bash
+./instal_conan.sh  -a
+```
+> note that this for all major three build type options: `debug`, `release` and `debug with release info`.
+To run the actual build from the command line:
+```bash
+cmake --preset conan-release
+cmake --preset conan-debug
+cmake --preset conan-relwithdebInfo
+```
+To generate the cmake "project" files - in this case `Makefile`s under the `build` directory.
+and then:
+```bash
+cmake build --preset conan-release
+cmake build --preset conan-debug
+cmake build --preset conan-relwithdebInfo
+```
+To build each of the build type setting.
+> note that you can skip any one of the three above, depending on the build you would like to create.
+### Building on Windows
+Run the commands:
+```bash
+ conan install -s build_type=Debug .  --build=missing
+ conan install -s build_type=Release .  --build=missing
+ conan install -s build_type=RelWithDebInfo .  --build=missing
+```
+To generate the missing dependencies.
+> note that this for all major three build type options: `debug`, `release` and `debug with release info`.
+Then to do the actual build:
+```bash
+cmake --preset conan-default
+cmake --build --preset conan-debug
+cmake --build --preset conan-release
+```
+
+
 ## Basic Usage
 Say you have this data type:
 

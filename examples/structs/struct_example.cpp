@@ -2,7 +2,9 @@
 // we are using iterations on the structures members so that we do
 // not need to write a code to do it manually - in essence we are 
 // using the structure as array
-#include "json_parser.h"
+#include "json_istream.h"
+#include "json_ostream.h"
+#include "json_utils.h"
 #include <string>
 #include <vector>
 #include <iostream>

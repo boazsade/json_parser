@@ -12,10 +12,34 @@
 #include <vector>
 #include <list>
 #include <set>
+#include <array>
 #include <iostream>
+#include <optional>
+#include <type_traits>
+#include <unordered_set>
 
 namespace json
 {
+
+// namespace detail {
+//     template <typename, template <typename...> typename...>
+//     struct is_specialization_of
+//      : std::false_type {};
+    
+//     template <typename T, template <typename...> typename U, template <typename...> typename ...Us>
+//     struct is_specialization_of<T, U, Us...>
+//      : is_specialization_of<T, Us...> {};
+     
+//     template <template <typename...> typename T, typename ...Args, template <typename...> typename ...Us>
+//     struct is_specialization_of<T<Args...>, T, Us...>
+//      : std::true_type {};
+    
+//     template<typename T>
+//     struct is_stl_container
+//      : is_specialization_of<T, (std::vector<...>)> {
+
+//      };
+// }       // end of namespace detail
 
 //template<typename Ch>
 //struct this_type& basic_ostream;
@@ -164,7 +188,7 @@ struct null_entry {
 template<typename Ch> inline
 std::basic_ostream<Ch>& operator << (std::basic_ostream<Ch>& stream, const null_entry&)
 {
-	return stream<<"null";
+	return stream << "null";
 }
 
 namespace detail {
@@ -172,6 +196,15 @@ template<typename P, typename T>
 struct handle_pointer;
 }
 
+// template <typename T>
+// struct is_stl_container
+//  : detail::is_stl_container<T> {};
+
+template <typename T>
+concept Container = requires(T t) {
+    std::begin(t);
+    std::end(t);
+};
 
 template<typename Ch>
 struct basic_ostream : json_stream
@@ -266,7 +299,7 @@ struct basic_ostream : json_stream
     	return this->insert<sub_tree>(st);
 	}
 
-    this_type& operator ^ (const null_entry& ne)
+    this_type& operator ^ (null_entry ne)
 	{
     	return this->insert<null_entry>(ne);
 	}
@@ -274,14 +307,14 @@ struct basic_ostream : json_stream
     template<typename P>
     this_type& operator ^ (const P* ptr)
     {
-    	typedef detail::handle_pointer<P, this_type>	handler_t;
+    	using handler_t = detail::handle_pointer<P, this_type>;
     	return handler_t::process(ptr, *this);
     }
 
     template<size_t N>
     this_type& operator ^ (const char_type cstring[N])
     {
-    	typedef detail::handle_pointer<char_type, this_type>	handler_t;
+    	using handler_t = detail::handle_pointer<char_type, this_type>;
     	return handler_t::process(cstring, *this);
     }
 
@@ -307,6 +340,38 @@ struct basic_ostream : json_stream
     	return this->range_add(vec.begin(), vec.end());
     }
 
+    template<typename K, typename H, typename Ke, typename A>
+    this_type& operator ^ (const std::unordered_set<K, H, Ke, A>& us)
+    {
+    	return this->range_add(us.begin(), us.end());
+    }
+
+    template<typename T>
+    this_type& operator ^ (const std::optional<T>& v)
+    {
+    	if (v) {
+            return *this ^ v.value();
+        }
+        return this->insert<null_entry>(null_entry{});
+    }
+
+    template <Container C>
+    this_type& operator ^ (const std::optional<C>& v)
+    {
+    	if (v) {
+            return *this ^ v.value();
+        }
+        return this->insert<null_entry>(null_entry{});
+    }
+
+    this_type& operator ^ (const std::optional<std::string>& v)
+    {
+    	if (v) {
+            return this->insert(v.value());
+        }
+        return this->insert<null_entry>(null_entry{});
+    }
+
     template<typename T>
     this_type& operator ^ (const c_array<T>&  arr)
     {
@@ -315,6 +380,12 @@ struct basic_ostream : json_stream
 
     template<typename T, std::size_t S>
     this_type& operator ^ (const boost::array<T, S>& arr)
+    {
+    	return this->range_add(arr.begin(), arr.end());
+    }
+
+    template<typename T, std::size_t S>
+    this_type& operator ^ (const std::array<T, S>& arr)
     {
     	return this->range_add(arr.begin(), arr.end());
     }
@@ -476,9 +547,6 @@ std::basic_string<Ch> to_string(basic_output_stream<Ch>& os)
 
 ///////////////////////////////////////////////////////////////
 
-//typedef basic_ostream<char> ostream;
-//typedef basic_ostream<wchar_t> wostream;
-
 ///////////////////////////////////////////////////////////////
 
 template<typename Ch>
@@ -510,9 +578,6 @@ std::basic_string<Ch> operator ^
     (basic_output_stream<Ch>& os, _end_out_stream) {
         return detail::to_string(os);
 }
-
-//using output_stream = basic_output_stream<char>;
-//using woutput_stream = basic_output_stream<wchar_t>;
 
 }   // end of namespace json
 

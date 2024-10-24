@@ -28,3 +28,4 @@ yarn.lock
 debug
 release
 .vscode
+ConanPresets.json

@@ -13,7 +13,7 @@ elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-overflow -Wnull-dereference -Wnonnull") 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverlength-strings")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-declaration-mismatch") 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wlogical-op -Wfloat-conversion -Wdangling-else -Wconversion -Wcast-align -Wcast-qual -Wshadow")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wlogical-op -Wfloat-conversion -Wdangling-else -Wconversion -Wcast-align -Wcast-qual")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wfloat-equal -Wstringop-overflow")
   # we would like to keep 0 warning, so if we are not running with the 
   # static analyzer, we would like to turn warning to errors. Because we
