@@ -11,3 +11,4 @@ list(APPEND EXTRA_INCLUDES $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> )
 
 target_include_directories(struct_example PUBLIC ${EXTRA_INCLUDES})
 target_link_libraries(struct_example PUBLIC ${EXTRA_LIBS})
+include_directories(${Boost_INCLUDE_DIRS} SYSTEM)

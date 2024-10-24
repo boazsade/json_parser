@@ -521,12 +521,10 @@ struct collection_extractor
     {
         using value_type = typename T::value_type;
         if (jis.entries().empty()) {
-            std::cout << "The entry for the optional container is not empty" << std::endl;
             return jis;     // nothing really to do..
         }
         if (!container.has_value())  {
-            std::cout << "initiating the value for our container before reading" << std::endl;
-            container = T{};
+            container = value_type{};
         }
         
         return process(jis, container.value());
@@ -569,7 +567,6 @@ inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::unordered_set
 template<typename T, typename A, typename Ch>
 inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::optional<std::vector<T, A>>& container)
 {
-    std::cout << "trying to process optional vector.." << std::endl;
     return  detail::collection_extractor<std::vector<T, A>, Ch>::process(jis, container);
 }
 
@@ -593,23 +590,6 @@ inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::optional<std:
 
     return  detail::collection_extractor<std::unordered_set<Key, Hash, KeyEqual, Allocator>, Ch>::process(jis, container);
 }
-
-/*template<typename T, typename Ch>
-inline basic_istream<Ch>& operator ^ (basic_istream<Ch>& jis, std::optional<T>& va) {
-    std::cout << "reading optional value from json" <<std::endl;
-    try {
-        T v{};
-        jis ^ v;
-        if (jis.good()) {
-            std::cout << "Setting the new value that we read successfully from json.." << std::endl;
-            va = v;
-        }
-    } catch (const std::exception&) {
-    }
-    va = std::nullopt;  // if we failed here, just set this to none
-    return jis;
-}*/
-
 
 }   // end of namespace json
 

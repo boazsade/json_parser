@@ -325,7 +325,6 @@ struct basic_ostream : json_stream
     template<typename T, typename A>
     this_type& operator ^ (const std::vector<T, A>& vec)
     {
-        std::cout << "saving a vector of values" << std::endl;
     	return this->range_add(vec.begin(), vec.end());
     }
 
@@ -360,7 +359,6 @@ struct basic_ostream : json_stream
     this_type& operator ^ (const std::optional<C>& v)
     {
     	if (v) {
-            std::cout << "insert a new optional array to our json" << std::endl;
             return *this ^ v.value();
         }
         return this->insert<null_entry>(null_entry{});

@@ -28,7 +28,7 @@ namespace boost { namespace property_tree { namespace json_parser
         static bool test(Ch cha)
         {
             return (cha == 0x20 || cha == 0x21 || (cha >= 0x23 && cha <= 0x2E) ||
-                (cha >= 0x30 && cha <= 0x5B) || (cha >= 0x5D && cha <= 0xFF));
+                (cha >= 0x30 && cha <= 0x5B) || (cha >= 0x5D));
         }
     };
 
@@ -38,7 +38,7 @@ namespace boost { namespace property_tree { namespace json_parser
         static bool test(char cha)
         {
             return (cha == 0x20 || cha == 0x21 || (cha >= 0x23 && cha <= 0x2E) ||
-                (cha >= 0x30 && cha <= 0x5B) || (cha >= 0x5D && cha < 0xFF));
+                (cha >= 0x30 && cha <= 0x5B) || (cha >= 0x5D));
         }
     };
 

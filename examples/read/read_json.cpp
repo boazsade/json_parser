@@ -1,4 +1,6 @@
-#include "json_parser.h" 
+#include "json_istream.h"
+#include "json_ostream.h"
+#include "json_utils.h"
 #include <boost/filesystem.hpp> 
 #include <vector>
 #include <string>
