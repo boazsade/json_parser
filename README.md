@@ -6,6 +6,7 @@ This is not intended for JSON manipulation through C++, i.e. if you would like t
 This however should make it simple to read JSON directly into C++ objects and to convert C++ objects back into JSON match like [Python](https://docs.python.org/3/library/json.html) or [Rust serde](https://docs.rs/serde_json/latest/serde_json/).
 Unlike Python or Rust, where reflection exists, C++ which luck it, require that we will write a conversion operator from and to JSON.
 To this end, you would need to implement `operator ^` for both reading (istream) and writing (ostream). This flow to same pattern as the iostream operators in C++. Please note that order to make it simpler to implement and take away the burden of manually writing these operators, this uses [Boost Fusion](https://www.boost.org/doc/libs/1_85_0/libs/fusion/doc/html/fusion/adapted/adapt_struct.html) to mimic the reflection operation that we have in other languages, but still we don't have good macro support as in Rust to bypass auto reflection into and out of JSON. So in it simpler form you would still need to inform what are the JSON labels as well as manually calling the serializing/deserializing functions.
+
 ### Note of Performance
 The  (boost property tree)[https://www.boost.org/doc/libs/1_85_0/doc/html/property_tree.html] is very bad in term of performance as well as in memory management, please don't use this where need to need to handle large JSON inputs or outputs or/and where you handle large volume of data in term of throughput.
 
@@ -13,6 +14,8 @@ The  (boost property tree)[https://www.boost.org/doc/libs/1_85_0/doc/html/proper
 This library tries to support build in stl data types such as `vector`, `set`, `list`, `map`. Were all but `map` will be converted to JSON array, and map into JSON dictionary. Please note that the conversion is automatic, so you don't need to implement it for your vectors, but if the vector do contain you own data types, you would need to implement `operator ^` them just like `operator <<` and ` operator >>` in C++.
 
 ## Build
+>Note that this library assume a compiler that support `C++ 20`. It was tests with G++ 11, 12, 13 and 14 as well as Microsoft Visual Studio 2019.
+
 This library is using [conan](https://docs.conan.io/2/index.html) and [cmake](https://cmake.org/) for its builds.
 You can build this without `conan` using just cmake, but in this case, make sure to install (boost)[https://www.boost.org/] on you build machine.
 > Note that you depends on the existing matching releases on conan repository, so the first time installation can be long if there are no exact matching to the packages of boost on conan repository.
