@@ -5,6 +5,9 @@
 #include <boost/fusion/adapted/struct.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/phoenix/phoenix.hpp>
+#include <boost/mpl/size.hpp>
+#include <span>
+#include <cassert>
 #include <optional>
 #include <type_traits>
 #include <iostream>
@@ -198,41 +201,50 @@ istream& extract_from(istream& with, T& to, const char* label)
 }   // end of namespace private_
 
 template<typename T>
-inline auto build_entry(ostream& js, const T& from, const char** labels) -> ostream& {
+inline auto build_entry(ostream& js, const T& from, std::span<const char*> labels) -> ostream& {
     using boost::phoenix::arg_names::arg1;
     using namespace json::literals;
 
-    boost::fusion::for_each(from, [&js, &labels](auto&& arg1) {       
-            auto rr = js ^ _start(*labels);
+    assert(labels.size() == boost::mpl::size<T>::type::value);
+
+    boost::fusion::for_each(from, [&js, start = labels.begin(), end = labels.end()](auto&& arg1) mutable {
+            assert(start != end);      
+            auto rr = js ^ _start(*start);
             rr ^ arg1 ^ _end;
-            ++labels;
+            ++start;
         }
     );
     return js;
 }
 
 template<typename T>
-inline auto read_entry(istream& js, T& to, const char** labels) -> istream& {
+inline auto read_entry(istream& js, T& to, std::span<const char*> labels) -> istream& {
     using boost::phoenix::arg_names::arg1;
     using namespace json::literals;
 
-    boost::fusion::for_each(to, [&js, &labels](auto&& arg1) {
-           auto rr = js ^ _child(js, _name(*labels));
+    assert(labels.size() == boost::mpl::size<T>::type::value);
+
+    boost::fusion::for_each(to, [&js, start = labels.begin(), end = labels.end()] (auto&& arg1) mutable {
+            assert(start != end);
+            auto rr = js ^ _child(js, _name(*start));
             rr ^ arg1;
-            ++labels;
+            ++start;
         }
     );
     return js;
 }
 
 template<typename T>
-inline auto serialized(ostream& os, const T& from, const char** labels) -> ostream& {
+inline auto serialized(ostream& os, const T& from, std::span<const char*> labels) -> ostream& {
     using boost::phoenix::arg_names::arg1;
     using namespace json::literals;
 
-    boost::fusion::for_each(from, [&os, &labels](auto&& arg1) {
-            private_::insert_to(os, arg1, *labels);
-            ++labels;
+    assert(labels.size() == boost::mpl::size<T>::type::value);
+
+    boost::fusion::for_each(from, [&os, start = labels.begin(), end = labels.end()](auto&& arg1) mutable {
+            assert(start != end);
+            private_::insert_to(os, arg1, *start);
+            ++start;
             return os;
         }
     );
@@ -240,13 +252,16 @@ inline auto serialized(ostream& os, const T& from, const char** labels) -> ostre
 }
 
 template<typename T>
-inline auto deserialized(istream& os, T& from, const char** labels) -> istream& {
+inline auto deserialized(istream& os, T& from, std::span<const char*> labels) -> istream& {
     using boost::phoenix::arg_names::arg1;
     using namespace json::literals;
 
-    boost::fusion::for_each(from, [&os, &labels](auto&& arg1) {
-            private_::extract_from(os, arg1, *labels);
-            ++labels;
+    assert(labels.size() == boost::mpl::size<T>::type::value);
+
+    boost::fusion::for_each(from, [&os, start = labels.begin(), end = labels.end()](auto&& arg1) mutable {
+            assert(start != end);
+            private_::extract_from(os, arg1, *start);
+            ++start;
             return os;
         }
     );

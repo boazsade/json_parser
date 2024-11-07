@@ -30,7 +30,7 @@ auto operator ^ (json::ostream& os, const foo& f) -> json::ostream& {
         "A", "B", "C", "S"
     };
 
-    return json::util::serialized(os, f, &LABELS[0]);
+    return json::util::serialized(os, f, LABELS);
 }
 
 auto operator ^ (json::istream& os, foo& f) -> json::istream& {
@@ -38,7 +38,7 @@ auto operator ^ (json::istream& os, foo& f) -> json::istream& {
         "A", "B", "C", "S"
     };
 
-    return json::util::deserialized(os, f, &LABELS[0]);
+    return json::util::deserialized(os, f, LABELS);
 }
 
 struct bar {
@@ -62,7 +62,7 @@ auto operator ^ (json::ostream& os, const bar& f) -> json::ostream& {
         "int values", "double values"
     };
 
-    return json::util::serialized(os, f, &LABELS[0]);
+    return json::util::serialized(os, f, LABELS);
 }
 
 auto operator ^ (json::istream& os, bar& f) -> json::istream& {
@@ -70,7 +70,7 @@ auto operator ^ (json::istream& os, bar& f) -> json::istream& {
         "int values", "double values"
     };
 
-    return json::util::deserialized(os, f, &LABELS[0]);
+    return json::util::deserialized(os, f, LABELS);
 }
 
 struct baz {
@@ -88,7 +88,7 @@ auto operator ^ (json::ostream& os, const baz& f) -> json::ostream& {
         "foo", "baz"
     };
 
-    return json::util::build_entry(os, f, &LABELS[0]);
+    return json::util::build_entry(os, f, LABELS);
 }
 
 auto operator ^ (json::istream& os, baz& f) -> json::istream& {
@@ -96,7 +96,7 @@ auto operator ^ (json::istream& os, baz& f) -> json::istream& {
         "foo", "baz"
     };
 
-    return json::util::read_entry(os, f, &LABELS[0]);
+    return json::util::read_entry(os, f, LABELS);
 }
 
 
